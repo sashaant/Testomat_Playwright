@@ -1,18 +1,6 @@
 name: Playwright reporting
 
-on:
-  workflow_dispatch:
-    inputs:
-      grep:
-        description: 'tests to grep'
-        required: false
-        default: ''
-      run:
-        required: false
-      testomatio:
-        required: false
-      testomatio_url:
-        required: false
+on: [push]
 
 jobs:
   reporting:
@@ -23,7 +11,7 @@ jobs:
         node-version: [18.x]
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v3
@@ -50,6 +38,17 @@ jobs:
           TESTOMATIO: '${{ secrets.TESTOMATIO }}'
           TESTOMATIO_RUN: '${{ github.event.inputs.run }}'
 
-      - name: Upload test results to GitHub Actions
-        if: success() || failure()
-        run: npx playwright show-report --reporter=github-actions-ctrf
+      - name: Publish CTRF Test Summary Results
+        run: npx github-actions-ctrf summary test-results/ctrf-report.json
+
+      - name: Publish CTRF Detailed Test Summary Results
+        run: npx github-actions-ctrf tests test-results/ctrf-report.json
+
+      - name: Publish CTRF Failed Test Summary Results
+        run: npx github-actions-ctrf failed test-results/ctrf-report.json
+
+      - name: Publish CTRF Flaky Test Summary Results
+        run: npx github-actions-ctrf flaky test-results/ctrf-report.json
+
+      - name: Annotate failed tests
+        run: npx github-actions-ctrf annotate test-results/ctrf-report.json
