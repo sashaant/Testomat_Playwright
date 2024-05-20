@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       grep:
-        description: 'tests to grep '
+        description: 'tests to grep'
         required: false
         default: ''
       run:
@@ -24,6 +24,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v3
         with:
@@ -40,3 +41,15 @@ jobs:
         env:
           TESTOMATIO: '${{ secrets.TESTOMATIO }}'
           TESTOMATIO_RUN: '${{ github.event.inputs.run }}'
+
+      - name: Upload Playwright test results to Testomatio
+        if: success() || failure()
+        run: |
+          npx @testomatio/reporter --path test-results/
+        env:
+          TESTOMATIO: '${{ secrets.TESTOMATIO }}'
+          TESTOMATIO_RUN: '${{ github.event.inputs.run }}'
+
+      - name: Upload test results to GitHub Actions
+        if: success() || failure()
+        run: npx playwright show-report --reporter=github-actions-ctrf
